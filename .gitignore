@@ -44,8 +44,11 @@ Thumbs.db
 desktop.ini
 
 # --- Claude Code (per-user state) ---
-.claude/state/
-.claude/settings.local.json
+.claude/
+
+# --- Project docs (local only) ---
+CLAUDE.md
+docs/PROJECT_SPEC.md
 
 # --- Local artefacts ---
 *.log
