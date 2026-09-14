@@ -1,0 +1,53 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# --- Node ---
+node_modules/
+dist/
+build/
+.vite/
+*.tsbuildinfo
+npm-debug.log*
+.eslintcache
+
+# --- Env / secrets (never commit — Key Vault only) ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.pfx
+azure.auth.json
+
+# --- Azure / IaC ---
+.azure/
+*.bicepparam.local
+infra/**/*.parameters.local.json
+
+# --- Editors / OS ---
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.shared.json
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Claude Code (per-user state) ---
+.claude/state/
+.claude/settings.local.json
+
+# --- Local artefacts ---
+*.log
+tmp/
+.scratch/
