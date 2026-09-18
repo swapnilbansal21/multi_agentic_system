@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+langgraph
+pydantic-settings
+slowapi
+sqlalchemy[asyncio]
+asyncpg
+openai
+instructor
