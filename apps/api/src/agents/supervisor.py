@@ -1,13 +1,16 @@
-from typing import Literal, TypedDict
+from typing import Any, Literal, TypedDict, cast
 
 import instructor
 from langgraph.graph import END, START, StateGraph
+from langgraph.graph.state import CompiledStateGraph
 from openai import AsyncAzureOpenAI
 from pydantic import BaseModel
 
 from src.agents.agenda_composer import run_agenda_composer_agent
 from src.agents.scheduler import run_scheduler_agent
 from src.core.config import settings
+from src.db.session import async_session_factory
+from src.services.officer_directory import resolve_attendee_emails
 
 
 class IntentClassification(BaseModel):
@@ -19,7 +22,7 @@ class IntentClassification(BaseModel):
 class SupervisorState(TypedDict):
     query: str
     classification: IntentClassification | None
-    result: dict | None
+    result: dict[str, Any] | None
 
 
 def _get_instructor_client() -> instructor.AsyncInstructor:
@@ -59,23 +62,29 @@ def route_after_classify(state: SupervisorState) -> str:
     return classification.intent
 
 
-def scheduler_node(state: SupervisorState) -> SupervisorState:
+async def scheduler_node(state: SupervisorState) -> SupervisorState:
     classification = state["classification"]
     assert classification is not None
-    payload = {"attendees": classification.attendees, "topic": classification.topic}
-    state["result"] = run_scheduler_agent(payload)
+
+    async with async_session_factory() as session:
+        attendee_emails = await resolve_attendee_emails(session, classification.attendees)
+
+    payload = {"attendees": attendee_emails, "topic": classification.topic}
+    state["result"] = await run_scheduler_agent(payload)
     return state
 
 
-def agenda_node(state: SupervisorState) -> SupervisorState:
+async def agenda_node(state: SupervisorState) -> SupervisorState:
     classification = state["classification"]
     assert classification is not None
     payload = {"attendees": classification.attendees, "topic": classification.topic}
-    state["result"] = run_agenda_composer_agent(payload)
+
+    async with async_session_factory() as session:
+        state["result"] = await run_agenda_composer_agent(session, payload)
     return state
 
 
-def build_supervisor_graph():
+def build_supervisor_graph() -> CompiledStateGraph[SupervisorState, None, SupervisorState, SupervisorState]:
     graph = StateGraph(SupervisorState)
     graph.add_node("classify", classify_node)
     graph.add_node("scheduler", scheduler_node)
@@ -96,8 +105,11 @@ def build_supervisor_graph():
 supervisor_graph = build_supervisor_graph()
 
 
-async def run_supervisor(query: str) -> dict:
-    final_state = await supervisor_graph.ainvoke({"query": query, "classification": None, "result": None})
+async def run_supervisor(query: str) -> dict[str, Any]:
+    final_state = cast(
+        SupervisorState,
+        await supervisor_graph.ainvoke({"query": query, "classification": None, "result": None}),
+    )
     result = final_state["result"]
     assert result is not None
     return result

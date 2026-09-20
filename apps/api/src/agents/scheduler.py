@@ -1,11 +1,17 @@
-def run_scheduler_agent(payload: dict) -> dict:
+from typing import Any
+
+from src.services.mcp_calendar_client import find_slots
+
+
+async def run_scheduler_agent(payload: dict[str, Any]) -> dict[str, Any]:
     attendees = payload.get("attendees", [])
+    suggestions = await find_slots(
+        attendees=attendees,
+        duration_minutes=payload.get("duration_minutes", 30),
+        days_ahead=payload.get("days_ahead", 7),
+    )
     return {
         "agent": "scheduler",
-        "suggested_slots": [
-            {"start": "2026-09-22T15:00:00+05:30", "confidence": 0.9},
-            {"start": "2026-09-23T16:00:00+05:30", "confidence": 0.75},
-            {"start": "2026-09-24T11:00:00+05:30", "confidence": 0.6},
-        ],
+        "suggested_slots": suggestions,
         "attendees": attendees,
     }

@@ -1,0 +1,7 @@
+# Separate from requirements.txt / requirements-dev.txt on purpose — ragas
+# pulls a langchain-community version that conflicts with the app's langgraph
+# pin. Install into its own venv: python -m venv .venv-eval && .venv-eval/...
+ragas==0.2.15
+langchain-community==0.3.27
+langchain-openai
+python-dotenv

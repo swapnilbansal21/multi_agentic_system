@@ -5,5 +5,9 @@ pydantic-settings
 slowapi
 sqlalchemy[asyncio]
 asyncpg
+alembic
+pgvector
+pypdf
 openai
 instructor
+mcp
