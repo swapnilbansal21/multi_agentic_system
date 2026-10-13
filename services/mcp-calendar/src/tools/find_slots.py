@@ -48,7 +48,14 @@ def _candidate_starts(days_ahead: int, duration_minutes: int, tz: ZoneInfo) -> l
     return candidates
 
 
-def _is_free(slot_start: datetime, slot_end: datetime, busy: list[tuple[datetime, datetime]]) -> bool:
+def _is_free(
+    slot_start: datetime, slot_end: datetime, busy: list[tuple[datetime, datetime]] | None
+) -> bool:
+    if busy is None:
+        # Google couldn't report free/busy for this calendar (no access, not
+        # found, etc.) — treat as unavailable rather than silently "free" to
+        # avoid double-booking someone we have no real visibility into.
+        return False
     return all(slot_end <= b_start or slot_start >= b_end for b_start, b_end in busy)
 
 
@@ -72,7 +79,7 @@ async def find_slots(
     for start in candidates:
         end = start + timedelta(minutes=duration_minutes)
         free_count = sum(
-            1 for attendee in attendees if _is_free(start, end, busy_by_attendee.get(attendee, []))
+            1 for attendee in attendees if _is_free(start, end, busy_by_attendee.get(attendee))
         )
         if free_count == 0:
             continue

@@ -21,6 +21,7 @@ class IntentClassification(BaseModel):
 
 class SupervisorState(TypedDict):
     query: str
+    organizer_email: str
     classification: IntentClassification | None
     result: dict[str, Any] | None
 
@@ -69,7 +70,11 @@ async def scheduler_node(state: SupervisorState) -> SupervisorState:
     async with async_session_factory() as session:
         attendee_emails = await resolve_attendee_emails(session, classification.attendees)
 
-    payload = {"attendees": attendee_emails, "topic": classification.topic}
+    payload = {
+        "attendees": attendee_emails,
+        "topic": classification.topic,
+        "organizer_email": state["organizer_email"],
+    }
     state["result"] = await run_scheduler_agent(payload)
     return state
 
@@ -84,7 +89,9 @@ async def agenda_node(state: SupervisorState) -> SupervisorState:
     return state
 
 
-def build_supervisor_graph() -> CompiledStateGraph[SupervisorState, None, SupervisorState, SupervisorState]:
+def build_supervisor_graph() -> (
+    CompiledStateGraph[SupervisorState, None, SupervisorState, SupervisorState]
+):
     graph = StateGraph(SupervisorState)
     graph.add_node("classify", classify_node)
     graph.add_node("scheduler", scheduler_node)
@@ -105,10 +112,17 @@ def build_supervisor_graph() -> CompiledStateGraph[SupervisorState, None, Superv
 supervisor_graph = build_supervisor_graph()
 
 
-async def run_supervisor(query: str) -> dict[str, Any]:
+async def run_supervisor(query: str, organizer_email: str) -> dict[str, Any]:
     final_state = cast(
         SupervisorState,
-        await supervisor_graph.ainvoke({"query": query, "classification": None, "result": None}),
+        await supervisor_graph.ainvoke(
+            {
+                "query": query,
+                "organizer_email": organizer_email,
+                "classification": None,
+                "result": None,
+            }
+        ),
     )
     result = final_state["result"]
     assert result is not None

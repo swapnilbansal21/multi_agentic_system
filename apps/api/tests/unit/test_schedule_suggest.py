@@ -5,6 +5,7 @@ from typing import Any
 import pytest
 
 from src.agents import scheduler as scheduler_module
+from src.core.auth import CurrentOfficer
 from src.routers import agents as agents_module
 from src.routers.agents import ScheduleSuggestRequest, suggest_meeting_slots
 
@@ -26,10 +27,17 @@ async def test_run_scheduler_agent_forwards_duration_and_days_ahead(
     monkeypatch.setattr(scheduler_module, "find_slots", fake_find_slots)
 
     result = await scheduler_module.run_scheduler_agent(
-        {"attendees": ["a@example.com"], "duration_minutes": 60, "days_ahead": 3}
+        {
+            "attendees": ["a@example.com"],
+            "duration_minutes": 60,
+            "days_ahead": 3,
+            "organizer_email": "organizer@example.com",
+        }
     )
 
-    assert captured == {"attendees": ["a@example.com"], "duration_minutes": 60, "days_ahead": 3}
+    assert captured["attendees"] == ["a@example.com"]
+    assert captured["duration_minutes"] == 60
+    assert captured["days_ahead"] == 3
     assert result["agent"] == "scheduler"
     assert result["suggested_slots"] == [
         {"start": "2026-09-22T15:00:00+05:30", "end": "2026-09-22T15:30:00+05:30"}
@@ -66,6 +74,7 @@ async def test_suggest_meeting_slots_endpoint_bypasses_supervisor(
     monkeypatch.setattr(agents_module, "run_scheduler_agent", fake_run_scheduler_agent)
 
     request = ScheduleSuggestRequest(attendees=["a@example.com", "b@example.com"])
-    result = await suggest_meeting_slots(request)
+    officer = CurrentOfficer(email="pa@example.com", roles=["PA"])
+    result = await suggest_meeting_slots(request, officer=officer)
 
     assert result["attendees"] == ["a@example.com", "b@example.com"]

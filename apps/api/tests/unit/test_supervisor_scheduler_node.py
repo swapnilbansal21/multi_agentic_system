@@ -40,6 +40,7 @@ async def test_scheduler_node_resolves_names_to_emails_before_find_slots(
     try:
         state = {
             "query": "schedule with Priya",
+            "organizer_email": "organizer@example.com",
             "classification": IntentClassification(
                 intent="schedule", attendees=["Priya"], topic="review"
             ),

@@ -97,6 +97,28 @@ async def test_find_slots_excludes_public_holidays(monkeypatch: pytest.MonkeyPat
 
 
 @pytest.mark.asyncio
+async def test_find_slots_treats_unknown_freebusy_as_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:
+    """If Google can't report free/busy for an attendee (no access, not found),
+    that attendee must count as unavailable, not silently free."""
+
+    async def fake_freebusy_query(calendar_ids: list[str], time_min: datetime, time_max: datetime) -> dict:
+        return {"a@example.com": [], "b@example.com": None}
+
+    monkeypatch.setattr(find_slots_module, "freebusy_query", fake_freebusy_query)
+
+    suggestions = await find_slots_module.find_slots(
+        attendees=["a@example.com", "b@example.com"],
+        duration_minutes=30,
+        days_ahead=7,
+        top_n=3,
+    )
+
+    assert len(suggestions) == 3
+    assert all(s.confidence == 0.5 for s in suggestions)
+    assert all(s.attendees_free == 1 for s in suggestions)
+
+
+@pytest.mark.asyncio
 async def test_find_slots_requires_attendees() -> None:
     with pytest.raises(ValueError):
         await find_slots_module.find_slots(attendees=[])

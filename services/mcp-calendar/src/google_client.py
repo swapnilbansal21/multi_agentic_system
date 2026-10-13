@@ -50,7 +50,10 @@ async def _get_service_async() -> Resource:
 
 async def freebusy_query(
     calendar_ids: list[str], time_min: datetime, time_max: datetime
-) -> dict[str, list[tuple[datetime, datetime]]]:
+) -> dict[str, list[tuple[datetime, datetime]] | None]:
+    """Returns, per calendar_id, either its busy intervals, or None if Google
+    couldn't report free/busy for that calendar (no access, not found, etc.) —
+    callers must treat None as "unknown", not "free"."""
     service = await _get_service_async()
 
     def _call() -> dict[str, Any]:
@@ -64,8 +67,11 @@ async def freebusy_query(
 
     response = await asyncio.to_thread(_call)
 
-    busy_by_calendar: dict[str, list[tuple[datetime, datetime]]] = {}
+    busy_by_calendar: dict[str, list[tuple[datetime, datetime]] | None] = {}
     for cal_id, cal_data in response.get("calendars", {}).items():
+        if cal_data.get("errors"):
+            busy_by_calendar[cal_id] = None
+            continue
         busy_by_calendar[cal_id] = [
             (datetime.fromisoformat(b["start"]), datetime.fromisoformat(b["end"]))
             for b in cal_data.get("busy", [])

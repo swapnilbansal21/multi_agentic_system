@@ -26,10 +26,13 @@ export class ApiError extends Error {
   }
 }
 
-async function postJson<T>(path: string, body: unknown): Promise<T> {
+async function postJson<T>(path: string, body: unknown, token: string): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
     body: JSON.stringify(body),
   });
   const data = await res.json();
@@ -40,35 +43,43 @@ async function postJson<T>(path: string, body: unknown): Promise<T> {
 }
 
 export function suggestSlots(
+  token: string,
   attendees: string[],
   durationMinutes: number,
   daysAhead: number
 ): Promise<SuggestResponse> {
-  return postJson<SuggestResponse>("/schedule-meeting/suggest", {
-    attendees,
-    duration_minutes: durationMinutes,
-    days_ahead: daysAhead,
-  });
+  return postJson<SuggestResponse>(
+    "/schedule-meeting/suggest",
+    { attendees, duration_minutes: durationMinutes, days_ahead: daysAhead },
+    token
+  );
 }
 
-export function confirmMeeting(params: {
-  organizerCalendarId: string;
-  summary: string;
-  description: string;
-  start: string;
-  end: string;
-  attendees: string[];
-}): Promise<ConfirmResponse> {
-  return postJson<ConfirmResponse>("/schedule-meeting/confirm", {
-    organizer_calendar_id: params.organizerCalendarId,
-    summary: params.summary,
-    description: params.description,
-    start: params.start,
-    end: params.end,
-    attendees: params.attendees,
-  });
+export function confirmMeeting(
+  token: string,
+  params: {
+    organizerCalendarId: string;
+    summary: string;
+    description: string;
+    start: string;
+    end: string;
+    attendees: string[];
+  }
+): Promise<ConfirmResponse> {
+  return postJson<ConfirmResponse>(
+    "/schedule-meeting/confirm",
+    {
+      organizer_calendar_id: params.organizerCalendarId,
+      summary: params.summary,
+      description: params.description,
+      start: params.start,
+      end: params.end,
+      attendees: params.attendees,
+    },
+    token
+  );
 }
 
-export function agentQuery(query: string): Promise<unknown> {
-  return postJson<unknown>("/agent/query", { query });
+export function agentQuery(token: string, query: string): Promise<unknown> {
+  return postJson<unknown>("/agent/query", { query }, token);
 }

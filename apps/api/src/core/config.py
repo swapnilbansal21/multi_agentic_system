@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     azure_openai_embedding_deployment: str = "text-embedding-3-small"
     azure_openai_api_version: str = "2024-10-21"
     mcp_calendar_url: str = "http://localhost:8801/mcp"
+    entra_tenant_id: str = ""
+    entra_client_id: str = ""
 
 
 settings = Settings()

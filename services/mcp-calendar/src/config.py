@@ -34,7 +34,9 @@ class Settings(BaseSettings):
         "2026-11-24",  # Guru Nanak's Birthday
         "2026-12-25",  # Christmas
     ]
-    host: str = "0.0.0.0"
+    # Binds all interfaces so Container Apps' internal ingress can reach this service —
+    # it is not internet-exposed (see infra topology, PROJECT_SPEC.md §12).
+    host: str = "0.0.0.0"  # nosec B104
     port: int = 8801
 
 

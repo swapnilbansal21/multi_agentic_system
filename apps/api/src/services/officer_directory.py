@@ -19,6 +19,11 @@ async def find_officer_by_name(session: AsyncSession, name: str) -> Officer | No
 async def resolve_attendee_emails(session: AsyncSession, names: list[str]) -> list[str]:
     emails: list[str] = []
     for name in names:
+        if "@" in name:
+            # Already an email address (e.g. user typed it directly) — nothing
+            # to resolve, the officers table only maps free-text names -> email.
+            emails.append(name)
+            continue
         officer = await find_officer_by_name(session, name)
         if officer is None:
             raise OfficerNotFoundError(f"No officer found matching '{name}'")

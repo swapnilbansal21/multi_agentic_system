@@ -39,7 +39,9 @@ async def run_agenda_composer_agent(
             },
             {
                 "role": "user",
-                "content": f"Topic: {topic}\n\nPast meeting context:\n{context_text or '(none found)'}",
+                "content": (
+                    f"Topic: {topic}\n\nPast meeting context:\n{context_text or '(none found)'}"
+                ),
             },
         ],
     )

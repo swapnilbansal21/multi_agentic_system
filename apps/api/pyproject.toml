@@ -1,0 +1,24 @@
+[tool.ruff]
+target-version = "py314"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = [
+    # FastAPI's `Depends(...)` / `Security(...)` default-argument pattern is
+    # the documented idiom, not a real mutable-default bug.
+    "B008",
+]
+
+[tool.mypy]
+strict = true
+exclude = [
+    # Pulls ragas/langchain-community/datasets, which live in their own
+    # .venv-eval (see requirements-eval.txt) to avoid a langgraph version
+    # conflict — not installed in the main dev environment or CI.
+    "^src/evals/",
+]
+
+[[tool.mypy.overrides]]
+module = "jose.*"
+ignore_missing_imports = true

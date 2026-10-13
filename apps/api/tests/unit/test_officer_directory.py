@@ -61,3 +61,26 @@ async def test_resolve_attendee_emails_raises_when_not_found() -> None:
     async with async_session_factory() as session:
         with pytest.raises(OfficerNotFoundError):
             await resolve_attendee_emails(session, ["no-such-officer-xyz"])
+
+
+@pytest.mark.asyncio
+async def test_resolve_attendee_emails_passes_through_raw_emails() -> None:
+    async with async_session_factory() as session:
+        emails = await resolve_attendee_emails(session, ["already.an.email@example.com"])
+        assert emails == ["already.an.email@example.com"]
+
+
+@pytest.mark.asyncio
+async def test_resolve_attendee_emails_mixes_names_and_emails() -> None:
+    async with async_session_factory() as session:
+        session.add(Officer(name="Rakesh Kumar", email=TEST_EMAIL))
+        await session.commit()
+
+    try:
+        async with async_session_factory() as session:
+            emails = await resolve_attendee_emails(
+                session, ["rakesh", "raw.email@example.com"]
+            )
+            assert emails == [TEST_EMAIL, "raw.email@example.com"]
+    finally:
+        await _cleanup()

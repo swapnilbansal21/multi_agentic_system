@@ -2,7 +2,14 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>SMMS-Agent — Web Test</title>
+    <style>
+      body { margin: 0; }
+      input:focus, button:focus { outline: 2px solid #3457d5; outline-offset: 1px; }
+      button:hover:not(:disabled) { background: #2a45ad !important; }
+      button:disabled { opacity: 0.6; cursor: not-allowed; }
+    </style>
   </head>
   <body>
     <div id="root"></div>
