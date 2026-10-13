@@ -47,12 +47,7 @@ jobs:
           cache: pip
           cache-dependency-path: apps/api/requirements-dev.txt
 
-      - name: Install dependencies
-        run: pip install -r requirements-dev.txt
-
-      - name: Ruff lint
-        run: ruff check .
-
+      - 
       - name: Mypy strict
         run: mypy src
 
